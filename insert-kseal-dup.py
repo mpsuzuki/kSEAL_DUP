@@ -237,7 +237,7 @@ def main():
 
     prefixes = [ "TH", "C", "K", "D" ]
     for ucs_cp in sorted(sealDB.ucs2dups.keys()):
-      dups = ";".join(sorted(
+      dups = " ".join(sorted(
         list(sealDB.ucs2dups[ucs_cp]),
         key=lambda glyph_name: (
           prefixes.index(glyph_name.split("-")[0]),
