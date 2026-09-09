@@ -22,6 +22,10 @@ def parse_args():
     help="filename of glyph name pairs for unencoded, and equivalent glyphs for single versions"
          "default: None"
   )
+  parser.add_argument("--dup-merged", default="-",
+    help="filename of glyph name pairs for unencoded, and equivalent glyphs"
+         "default: - (stdin)"
+  )
   parser.add_argument("--log", default=None,
     help="filename to log, default: None (stderr)"
   )
@@ -41,6 +45,11 @@ def parse_args():
     args.ctx_dup_single = nullcontext(sys.stdin)
   else:
     args.ctx_dup_single = open(args.dup_single, "r", encoding="utf-8")
+
+  if args.dup_merged == "-":
+    args.ctx_dup_merged = nullcontext(sys.stdin)
+  else:
+    args.ctx_dup_merged = open(args.dup_merged, "r", encoding="utf-8")
 
   if args.log is None:
     args.ctx_log = nullcontext(sys.stderr)
