@@ -226,8 +226,15 @@ def main():
         proc_dup_line(line, sealDB, set_glyph_unco_src_multi, True, fh_log)
 
 
-    for ucs_cp, dups in sealDB.ucs2dups.items():
-      dups = ";".join(sorted(list(dups)))
+    prefixes = [ "TH", "C", "K", "D" ]
+    for ucs_cp in sorted(sealDB.ucs2dups.keys()):
+      dups = ";".join(sorted(
+        list(sealDB.ucs2dups[ucs_cp]),
+        key=lambda glyph_name: (
+          prefixes.index(glyph_name.split("-")[0]),
+          glyph_name
+        )
+      ))
       print(f"{ucs_cp}\tkSEAL_DUP\t{dups}")
 
 
