@@ -1,0 +1,4 @@
+*.swp
+__pycache__
+SealSources.txt
+kseal_dupsrc.txt
