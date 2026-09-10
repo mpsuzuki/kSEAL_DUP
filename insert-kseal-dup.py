@@ -14,14 +14,6 @@ def parse_args():
   parser.add_argument("--seal-sources", default="SealSources.txt",
     help="SealSource.txt without kSEAL_DUP property, default: SealSources.txt"
   )
-  parser.add_argument("--dup-multi", default="-",
-    help="filename of glyph name pairs for unencoded, and equivalent glyphs for all versions"
-         "default: - (stdin)"
-  )
-  parser.add_argument("--dup-single", default=None,
-    help="filename of glyph name pairs for unencoded, and equivalent glyphs for single versions"
-         "default: None"
-  )
   parser.add_argument("--dup-merged", default="-",
     help="filename of glyph name pairs for unencoded, and equivalent glyphs"
          "default: - (stdin)"
@@ -29,22 +21,16 @@ def parse_args():
   parser.add_argument("--log", default=None,
     help="filename to log, default: None (stderr)"
   )
+  parser.add_argument("--prefixes-universal", default="TH-,C-,K-,D-",
+    help="glyph prefixes for universal duplications, "
+         "default: TH-,C-,K-,D-"
+  )
   args = parser.parse_args()
 
   if args.seal_sources == "-":
     args.ctx_seal_sources = nullcontext(sys.stdin)
   else:
     args.ctx_seal_sources = open(args.seal_sources, "r", encoding="utf-8")
-
-  if args.dup_multi == "-":
-    args.ctx_dup_multi = nullcontext(sys.stdin)
-  else:
-    args.ctx_dup_multi = open(args.dup_multi, "r", encoding="utf-8")
-
-  if args.dup_single == "-":
-    args.ctx_dup_single = nullcontext(sys.stdin)
-  else:
-    args.ctx_dup_single = open(args.dup_single, "r", encoding="utf-8")
 
   if args.dup_merged == "-":
     args.ctx_dup_merged = nullcontext(sys.stdin)
@@ -55,6 +41,9 @@ def parse_args():
     args.ctx_log = nullcontext(sys.stderr)
   else:
     args.ctx_log = open(args.log, "w+", encoding="utf-8")
+
+  args.prefixes_universal = args.prefixes_universal.split(",")
+  args.set_prefixes_universal = set(args.prefixes_universal)
 
   return args
 
@@ -145,6 +134,113 @@ class SealDB:
       for prfx in prefixes:
         self.setSequences[prfx] = set()
 
+  def getGlyphsAtUCS(self, ucs, prefix = None):
+    glyphs = []
+    dic = self.sealSources[ucs]
+    # print(dic)
+    for key, value in dic.items():
+      if not key.startswith("kSEAL_"):
+        continue
+      if not key.endswith("Src"):
+        continue
+
+      # print(key, value)
+      _prefix, _seq, _len_seq, = split_glyph_name(value)
+      if prefix is not None and prefix != _prefix:
+        continue
+      glyphs.append(value)
+
+    return glyphs
+
+  def getHorizontalGlyphs(self, glyph_name, dedup = False):
+    # print(glyph_name)
+    if glyph_name not in self.glyph2ucs:
+      return []
+    ucs = self.glyph2ucs[glyph_name]
+
+    # print(ucs)
+    glyphs = self.getGlyphsAtUCS(ucs)
+    # print(glyphs)
+    if dedup:
+      glyphs = [
+        g
+        for g in glyphs
+        if g != glyph_name
+      ]
+    return glyphs
+
+  def getHorizontalGlyphForPrefix(self, glyph_name, prefix):
+    for gn in self.getHorizontalGlyphs(glyph_name):
+      _prfx, _seq, _len_seq, = split_glyph_name(gn)
+      if prefix == _prfx:
+        return gn
+    return None
+
+
+class MissingGlyph:
+  def __init__(self, sealDB, glyph_name):
+    self.glyphName = glyph_name
+    prefix, seq, len_seq, = split_glyph_name(glyph_name)
+    self.prefix = prefix
+    self.seq = seq
+    self.lenSeq = len_seq
+    self.duplicated = None
+    self.duplicatedUCS = None
+
+    seq_gap_start = max([
+      _seq
+      for _seq in sealDB.setSequences[prefix]
+      if _seq < self.seq
+    ])
+    self.gapStart = f"{prefix}{str(seq_gap_start).zfill(self.lenSeq)}"
+    self.gapStartSeq = seq_gap_start
+    self.gapStartUCS = sealDB.glyph2ucs[self.gapStart]
+    self.gapOffset = self.seq - seq_gap_start
+
+    seq_gap_end = min([
+      _seq
+      for _seq in sealDB.setSequences[prefix]
+      if self.seq < _seq
+    ])
+    self.gapEnd = f"{prefix}{str(seq_gap_end).zfill(self.lenSeq)}"
+    self.gapEndSeq = seq_gap_end
+    self.gapEndUCS = sealDB.glyph2ucs[self.gapEnd]
+
+  def __lt__(self, other):
+    if type(other).__name__ == "str":
+      return (self.glyphName < other)
+    elif type(other).__name__ == type(self).__name__:
+      return (self.glyphName < other.glyphName)
+    else:
+      raise ValueError("{type(self).__name__} cannot be compared with {type(other).__name__}")
+
+  def __gt__(self, other):
+    if type(other).__name__ == "str":
+      return (self.glyphName > other)
+    elif type(other).__name__ == type(self).__name__:
+      return (self.glyphName > other.glyphName)
+    else:
+      raise ValueError("{type(self).__name__} cannot be compared with {type(other).__name__}")
+
+  def __eq__(self, other):
+    if type(other).__name__ == "str":
+      return (self.glyphName == other)
+    elif type(other).__name__ == type(self).__name__:
+      return (self.glyphName == other.glyphName)
+    else:
+      raise ValueError("{type(self).__name__} cannot be compared with {type(other).__name__}")
+
+  def corresponds(self, other):
+    if type(self).__name__ != type(other).__name__:
+      return False
+
+    if self.gapStartUCS != other.gapStartUCS:
+      return False
+
+    if self.gapOffset != other.gapOffset:
+      return False
+
+    return True
 
 def proc_dup_line(line, sealDB, set_glyph_unco, multi_source = False, log=sys.stderr):
   toks = line.rstrip("\r\n").split("\t")
@@ -163,6 +259,8 @@ def proc_dup_line(line, sealDB, set_glyph_unco, multi_source = False, log=sys.st
     set_glyph_unco.add(glyph_unco)
 
   ucs_cp = sealDB.glyph2ucs[glyph_enc]
+  if ucs_cp is None:
+    print(f"{glyph_enc} is not coded", file=logt_fh)
   if ucs_cp not in sealDB.ucs2dups:
     sealDB.ucs2dups[ucs_cp] = set()
   sealDB.ucs2dups[ucs_cp].add(glyph_unco)
@@ -204,38 +302,58 @@ def main():
     max_seq = max(seqs)
     len_seq = len(str(max_seq))
     sealDB.missingGlyphs[prefix] = [
-      prefix + str(seq).zfill(len_seq)
+      MissingGlyph(sealDB, prefix + str(seq).zfill(len_seq))
       for seq in sorted(set(range(1, max(seqs) + 1)) - seqs)
     ]
     print(f"Unencoded {len(sealDB.missingGlyphs[prefix])} glyphs "
-          f"for {prefix}: {', '.join(sealDB.missingGlyphs[prefix])}")
+          f"for {prefix}: {', '.join([
+            mg.glyphName for mg in sealDB.missingGlyphs[prefix]
+          ])}")
 
   with \
-    args.ctx_dup_single as fh_single, \
-    args.ctx_dup_multi as fh_multi, \
+    args.ctx_dup_merged as fh_merged, \
     args.ctx_log as fh_log:
 
-    set_glyph_unco_src_single = set()
-    for line in fh_single:
-      if not line.startswith("#"):
-        proc_dup_line(line, sealDB, set_glyph_unco_src_single, False, fh_log)
 
-    for prefix in sealDB.setSequences.keys():
-      sealDB.missingGlyphs[prefix] = [
-        g
-        for g in sealDB.missingGlyphs[prefix]
-        if g not in set_glyph_unco_src_single
-      ]
-      print(f"Unencoded {len(sealDB.missingGlyphs[prefix])} glyphs "
-            f"for {prefix}: {', '.join(sealDB.missingGlyphs[prefix])}")
+    for line in fh_merged:
+      line = line.rstrip("\r\n")
+      if len(line) == 0 or line.startswith("#"):
+        continue
 
-    set_glyph_unco_src_multi = set()
-    for line in fh_multi:
-      if not line.startswith("#"):
-        proc_dup_line(line, sealDB, set_glyph_unco_src_multi, True, fh_log)
+      toks = line.split("\t")
+      print(toks)
+      glyph_unco = toks[0]
+      glyph_enc  = toks[1]
+      mcjks      = toks[2].split(",")
+      prefixes   = toks[3].split(",")
 
+      _mg = MissingGlyph(sealDB, glyph_unco)
+      for _prfx in prefixes:
+        mgs = [
+          mg
+          for mg in sealDB.missingGlyphs[_prfx]
+          if _mg.corresponds(mg)
+        ]
+        if len(mgs) == 0:
+          print(f"{glyph_unco} has no counter part in {_prfx}", file=fh_log)
+          continue
+        elif len(mgs) > 1:
+          print(f"{glyph_unco} has multiple counter parts in {_prfx}", file=fh_log)
+          continue
+        mg = mgs[0]
+
+        _ge = sealDB.getHorizontalGlyphForPrefix(glyph_enc, _prfx)
+        mg.duplicated = _ge
+        mg.duplicatedUCS = sealDB.glyph2ucs[_ge]
+
+    for prefix, missingGlyphs in sealDB.missingGlyphs.items():
+      for mg in missingGlyphs:
+        if mg.duplicatedUCS not in sealDB.ucs2dups:
+          sealDB.ucs2dups[mg.duplicatedUCS] = set()
+        sealDB.ucs2dups[mg.duplicatedUCS].add(mg.glyphName)
 
     prefixes = [ "TH", "C", "K", "D" ]
+    print(sealDB.ucs2dups.keys())
     for ucs_cp in sorted(sealDB.ucs2dups.keys()):
       dups = " ".join(sorted(
         list(sealDB.ucs2dups[ucs_cp]),
