@@ -10,10 +10,13 @@ from types import SimpleNamespace
 
 def parse_args():
   parser = argparse.ArgumentParser(
-    description="Insert kSEAL_DUP"
+    description="Insert kSEAL_DupSrc"
+  )
+  parser.add_argument("--dup-property-name", default="kSEAL_DupSrc",
+    help="property name for duplicatd source info, default: kSEAL_DupSrc"
   )
   parser.add_argument("--seal-sources", default="SealSources.txt",
-    help="SealSource.txt without kSEAL_DUP property, default: SealSources.txt"
+    help="SealSource.txt without duplicated source property, default: SealSources.txt"
   )
   parser.add_argument("--dup-tsv", default="-",
     help="filename of glyph name pairs for unencoded, and equivalent glyphs"
@@ -365,7 +368,7 @@ def main():
               f"{annotated_mcjks_comment} (in {args.dup_tsv})")
 
       dups = " ".join(dups)
-      print(f"{ucs_cp}\tkSEAL_DUP\t{dups}")
+      print(f"{ucs_cp}\t{args.dup_property_name}\t{dups}")
 
 
 if __name__ == "__main__":
