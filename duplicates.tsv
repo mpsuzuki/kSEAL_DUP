@@ -1,0 +1,47 @@
+# uncoded	coded	mcjk	prefixes	comment_if_any
+# --------------------------------------------------------------
+# duplications shared by some versions (but not universal)
+C-01855	C-01810	詿	TH-,C-	# duplication specific to Sungben DaXu, not in Jiguge
+C-01856	C-01809	誤	TH-,C-	# duplication specific to Sungben DaXu, not in Jiguge
+C-04311	C-04035	柅	TH-,C-,D-	# XiaoXu allocates nothing at this position
+K-03818	K-08615	𢱀	K-,D-	# C-03928, DaXu show slightly different shapes
+K-10163	K-04089	槾	K-,D-	# C-10532, DaXu show slightly different shapes
+# --------------------------------------------------------------
+# duplication specific to untouched Sungben DaXu
+C-06138	C-01549	踞	C-	# TH-05927 is modified to fit QJZ/DYC glyph
+# --------------------------------------------------------------
+# duplications specific to XiaoXu
+K-00729	K-00407	苖	K-	# C-00425
+K-04276	K-08435	閑	K-	# C-08742
+K-07013	K-00518	䕼	K-	# C-07268
+K-07050	K-07187	炙	K-	# C-07447
+K-07254	K-07435	𢘁	K-	# C-07697
+# --------------------------------------------------------------
+# duplications specific to DuanZhu
+D-00636	D-03514	𧗎	D-	# C-00659, swapped order in DYC
+D-00637	D-03515	𧂚	D-	# C-00658, swapped order in DYC
+# D-03795	D-08601	𢱀	D-	# C-03928
+# D-04175	D-03899	柅	D-	# C-04035
+D-05181	D-01567	廿	D-	#
+D-06991	D-00515	䕼	D-	#
+D-07635	D-01027	㕣	D-	#
+D-08865	D-08930	孌	D-	#
+# D-10147	D-04072	槾	D-	#
+# ==============================================================
+# universal duplications
+C-00914	C-08016	涶	TH-,C-,K-,D-
+C-00932	C-07621	悊	TH-,C-,D-
+K-00906	K-07360	悊	K-	# DaXu: 哲→悊→嚞, XiaoXu: 哲→嚞→悊
+C-01062	C-06335	𣢜	TH-,C-,K-,D-
+C-02141	C-08831	𢭤	TH-,C-,K-,D-
+C-02157	C-00972	右	TH-,C-,K-,D-
+C-02340	C-03173	剫	TH-,C-,K-,D-
+C-03518	C-01013	吁	TH-,C-,K-,D-
+C-04439	C-02876	敖,𢾍	TH-,C-,K-,D-
+C-05222	C-10894	院	TH-,C-,K-,D-
+C-05517	C-10765	輟	TH-,C-,K-,D-
+C-06277	C-00921	吹	TH-,C-,D-
+K-06094	K-00894	吹	K-	# XaXu: 欯→吹→欨, XiaoXu: 欯→欨→…→吹
+C-07601	C-03547	愷	TH-,C-,K-,D-
+C-08670	C-01038	否	TH-,C-,K-,D-
+C-10070	C-09938	蝥	TH-,C-,K-,D-
