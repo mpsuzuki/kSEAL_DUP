@@ -86,42 +86,6 @@ def split_glyph_name(glyph_name):
   return [m[1], int(m[2]), len(m[2])]
 
 
-def validate_glyph_name(glyph_name, test_prefix = False):
-  prefix, seq, len_seq, = split_glyph_name(glyph_name)
-
-  if len(prefix) == 0 or len_seq == 0:
-    return False
-
-  if test_prefix and prefix not in ("TH-", "TH-X", "TH-Y", "C-", "K-", "D-"):
-    return False
-
-  return True
-
-
-def test_glyph_unco_enc(glyph_unco, glyph_enc, set_seq):
-  prefix_unco, seq_unco, len_seq_unco, = split_glyph_name(glyph_unco)
-  prefix_enc,  seq_enc,  len_seq_enc,  = split_glyph_name(glyph_enc)
-
-  if prefix_unco != prefix_enc:
-    return False
-
-  if len_seq_unco != len_seq_enc:
-    return False
-
-  if prefix_unco not in set_seq:
-    return False
-
-  if prefix_enc not in set_seq:
-    return False
-
-  if seq_unco in set_seq[prefix_unco]:
-    return False
-
-  if seq_enc not in set_seq[prefix_enc]:
-    return False
-
-  return True
-
 class SealDB:
   def __init__(self, prefixes = []):
     self.sealSources = {}
@@ -241,50 +205,6 @@ class MissingGlyph:
       return False
 
     return True
-
-def proc_dup_line(line, sealDB, set_glyph_unco, multi_source = False, log=sys.stderr):
-  toks = line.rstrip("\r\n").split("\t")
-  glyph_unco = toks[0]
-  glyph_enc  = toks[1]
-  dup_ucss   = toks[2]
-  dup_ucs_hexs = ";".join([
-    "U+" + hex(ord(u))[2:].upper() for u in dup_ucss.split(";")
-  ])
-  print([glyph_unco, glyph_enc, dup_ucss, dup_ucs_hexs])
-
-  if not test_glyph_unco_enc(glyph_unco, glyph_enc, sealDB.setSequences):
-    return
-
-  if set_glyph_unco is not None:
-    set_glyph_unco.add(glyph_unco)
-
-  ucs_cp = sealDB.glyph2ucs[glyph_enc]
-  if ucs_cp is None:
-    print(f"{glyph_enc} is not coded", file=logt_fh)
-  if ucs_cp not in sealDB.ucs2dups:
-    sealDB.ucs2dups[ucs_cp] = set()
-  sealDB.ucs2dups[ucs_cp].add(glyph_unco)
-
-  if not multi_source:
-    return
-
-  prefix, seq, len_seq, = split_glyph_name(glyph_unco)
-  try:
-    index_unco = sealDB.missingGlyphs[prefix].index(glyph_unco)
-    for _prfx in sealDB.missingGlyphs.keys():
-      if prefix == _prfx:
-        continue
-      if index_unco < len(sealDB.missingGlyphs[_prfx]):
-        _g_unco = sealDB.missingGlyphs[_prfx][index_unco]
-        print(f"\t{glyph_unco} -> {_g_unco}")
-
-        set_glyph_unco.add(glyph_unco)
-        sealDB.ucs2dups[ucs_cp].add(_g_unco)
-
-  except:
-    print(f"{glyph_unco} is not found ", file=log)
-
-
 
 
 def main():
