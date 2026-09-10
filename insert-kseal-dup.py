@@ -14,9 +14,12 @@ def parse_args():
   parser.add_argument("--seal-sources", default="SealSources.txt",
     help="SealSource.txt without kSEAL_DUP property, default: SealSources.txt"
   )
-  parser.add_argument("--dup-merged", default="-",
+  parser.add_argument("--dup-tsv", default="-",
     help="filename of glyph name pairs for unencoded, and equivalent glyphs"
          "default: - (stdin)"
+  )
+  parser.add_argument("--verbose", "-v", action="count", default=0,
+    help="verbose mode (multiple -v increases the level)"
   )
   parser.add_argument("--log", default=None,
     help="filename to log, default: None (stderr)"
@@ -28,16 +31,15 @@ def parse_args():
   else:
     args.ctx_seal_sources = open(args.seal_sources, "r", encoding="utf-8")
 
-  if args.dup_merged == "-":
-    args.ctx_dup_merged = nullcontext(sys.stdin)
+  if args.dup_tsv == "-":
+    args.ctx_dup_tsv = nullcontext(sys.stdin)
   else:
-    args.ctx_dup_merged = open(args.dup_merged, "r", encoding="utf-8")
+    args.ctx_dup_tsv = open(args.dup_tsv, "r", encoding="utf-8")
 
   if args.log is None:
     args.ctx_log = nullcontext(sys.stderr)
   else:
     args.ctx_log = open(args.log, "w+", encoding="utf-8")
-
 
   return args
 
@@ -95,14 +97,12 @@ class SealDB:
   def getGlyphsAtUCS(self, ucs, prefix = None):
     glyphs = []
     dic = self.sealSources[ucs]
-    # print(dic)
     for key, value in dic.items():
       if not key.startswith("kSEAL_"):
         continue
       if not key.endswith("Src"):
         continue
 
-      # print(key, value)
       _prefix, _seq, _len_seq, = split_glyph_name(value)
       if prefix is not None and prefix != _prefix:
         continue
@@ -111,14 +111,11 @@ class SealDB:
     return glyphs
 
   def getHorizontalGlyphs(self, glyph_name, dedup = False):
-    # print(glyph_name)
     if glyph_name not in self.glyph2ucs:
       return []
     ucs = self.glyph2ucs[glyph_name]
 
-    # print(ucs)
     glyphs = self.getGlyphsAtUCS(ucs)
-    # print(glyphs)
     if dedup:
       glyphs = [
         g
@@ -219,23 +216,25 @@ def main():
       MissingGlyph(sealDB, prefix + str(seq).zfill(len_seq))
       for seq in sorted(set(range(1, max(seqs) + 1)) - seqs)
     ]
-    print(f"Unencoded {len(sealDB.missingGlyphs[prefix])} glyphs "
-          f"for {prefix}: {', '.join([
-            mg.glyphName for mg in sealDB.missingGlyphs[prefix]
-          ])}")
+    if args.verbose > 1:
+      print(f"Unencoded {len(sealDB.missingGlyphs[prefix])} glyphs "
+            f"for {prefix}: {', '.join([
+              mg.glyphName for mg in sealDB.missingGlyphs[prefix]
+            ])}")
 
   with \
-    args.ctx_dup_merged as fh_merged, \
+    args.ctx_dup_tsv as fh_dup, \
     args.ctx_log as fh_log:
 
 
-    for line in fh_merged:
+    for line in fh_dup:
       line = line.rstrip("\r\n")
       if len(line) == 0 or line.startswith("#"):
         continue
 
       toks = line.split("\t")
-      print(toks)
+      if args.verbose > 3:
+        print(toks)
       glyph_unco = toks[0]
       glyph_enc  = toks[1]
       mcjks      = toks[2].split(",")
@@ -267,7 +266,8 @@ def main():
         sealDB.ucs2dups[mg.duplicatedUCS].add(mg.glyphName)
 
     prefixes = [ "TH", "C", "K", "D" ]
-    print(sealDB.ucs2dups.keys())
+    if args.verbose > 1:
+      print(sealDB.ucs2dups.keys())
     for ucs_cp in sorted(sealDB.ucs2dups.keys()):
       dups = " ".join(sorted(
         list(sealDB.ucs2dups[ucs_cp]),
