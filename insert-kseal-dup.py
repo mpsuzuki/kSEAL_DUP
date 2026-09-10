@@ -21,10 +21,6 @@ def parse_args():
   parser.add_argument("--log", default=None,
     help="filename to log, default: None (stderr)"
   )
-  parser.add_argument("--prefixes-universal", default="TH-,C-,K-,D-",
-    help="glyph prefixes for universal duplications, "
-         "default: TH-,C-,K-,D-"
-  )
   args = parser.parse_args()
 
   if args.seal_sources == "-":
@@ -42,8 +38,6 @@ def parse_args():
   else:
     args.ctx_log = open(args.log, "w+", encoding="utf-8")
 
-  args.prefixes_universal = args.prefixes_universal.split(",")
-  args.set_prefixes_universal = set(args.prefixes_universal)
 
   return args
 
