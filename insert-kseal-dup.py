@@ -6,6 +6,7 @@ import json
 import argparse
 from pathlib import Path
 from contextlib import nullcontext
+from types import SimpleNamespace
 
 def parse_args():
   parser = argparse.ArgumentParser(
@@ -42,6 +43,76 @@ def parse_args():
     args.ctx_log = open(args.log, "w+", encoding="utf-8")
 
   return args
+
+def isMCJK(chr):
+  ucs_cp = ord(chr)
+  if 0x4E00 <= ucs_cp <= 0x9FFF:
+    return "URO"
+  elif 0x3400 <= ucs_cp <= 0x4DBF:
+    return "ExtA"
+  elif 0x20000 <= ucs_cp <= 0x2A6DF:
+    return "ExtB"
+  elif 0x2A700 <= ucs_cp <= 0x2B73F:
+    return "ExtC"
+  elif 0x2A740 <= ucs_cp <= 0x2B81F:
+    return "ExtD"
+  elif 0x2A820 <= ucs_cp <= 0x2CEAF:
+    return "ExtE"
+  elif 0x2CEB0 <= ucs_cp <= 0x2EBE0:
+    return "ExtF"
+  elif 0x30000 <= ucs_cp <= 0x3134F:
+    return "ExtG"
+  elif 0x31350 <= ucs_cp <= 0x323AF:
+    return "ExtH"
+  elif 0x2EBF0 <= ucs_cp <= 0x2EE5F:
+    return "ExtI"
+  elif 0x323B0 <= ucs_cp <= 0x3347F:
+    return "ExtJ"
+  elif 0xF900 <= ucs_cp <= 0xFAFF:
+    return "CmptBMP"
+  elif 0x2F800 <= ucs_cp <= 0x2FA1F:
+    return "CmptSIP"
+  else:
+    return False
+
+
+def mcjk_annotate(str):
+  toks_out = []
+  for chr in str:
+    if isMCJK(chr):
+      ucs_cp = ord(chr)
+      toks_out.append(f"U+{ucs_cp:04X}:{chr}")
+    else:
+      toks_out.append(chr)
+  return "".join(toks_out)
+
+
+RE_UCS_HEX = re.compile(
+  r"""
+    (?P<uplus_hex>[Uu]\+[0-9A-Fa-f]+) |
+    (?P<u_hex>u\+[0-9A-Fa-f]+)        |
+    (?P<raw_hex>[0-9A-Fa-f]+)         |
+    (?P<sep>[^0-9A-Fa-fUu\+])
+  """,
+  re.VERBOSE,
+)
+
+
+def mcjks_hex2utf8(mcjks):
+  toks_out = []
+  for m in RE_UCS_HEX.finditer(mcjks):
+    kind = m.lastgroup
+    tok = m.group()
+    if kind == "uplus_hex":
+      toks_out.append(f"U+{tok[2:]}:{chr(int(tok[2:], 16))}")
+    elif kind == "u_hex":
+      toks_out.append(f"U+{tok[1:]}:{chr(int(tok[1:], 16))}")
+    elif kind == "raw_hex":
+      toks_out.append(f"U+{tok}:{chr(int(tok, 16))}")
+    else:
+      toks_out.append(tok)
+  return "".join(toks_out)
+
 
 def update_set_seq(set_seq, prop_key, prop_value):
   if prop_key == "kSEAL_THXSrc":
@@ -141,6 +212,7 @@ class MissingGlyph:
     self.lenSeq = len_seq
     self.duplicated = None
     self.duplicatedUCS = None
+    self.meta = SimpleNamespace()
 
     seq_gap_start = max([
       _seq
@@ -208,23 +280,24 @@ def main():
     "D-",
   ))
 
-  parse_seal_sources(args, sealDB.sealSources, sealDB.glyph2ucs, sealDB.setSequences)
-  for prefix, seqs in sealDB.setSequences.items():
-    max_seq = max(seqs)
-    len_seq = len(str(max_seq))
-    sealDB.missingGlyphs[prefix] = [
-      MissingGlyph(sealDB, prefix + str(seq).zfill(len_seq))
-      for seq in sorted(set(range(1, max(seqs) + 1)) - seqs)
-    ]
-    if args.verbose > 1:
-      print(f"Unencoded {len(sealDB.missingGlyphs[prefix])} glyphs "
-            f"for {prefix}: {', '.join([
-              mg.glyphName for mg in sealDB.missingGlyphs[prefix]
-            ])}")
-
   with \
     args.ctx_dup_tsv as fh_dup, \
     args.ctx_log as fh_log:
+
+    parse_seal_sources(args, sealDB.sealSources, sealDB.glyph2ucs, sealDB.setSequences)
+    for prefix, seqs in sealDB.setSequences.items():
+      max_seq = max(seqs)
+      len_seq = len(str(max_seq))
+      sealDB.missingGlyphs[prefix] = [
+        MissingGlyph(sealDB, prefix + str(seq).zfill(len_seq))
+        for seq in sorted(set(range(1, max(seqs) + 1)) - seqs)
+      ]
+      if args.verbose > 0:
+        print(f"Unencoded {len(sealDB.missingGlyphs[prefix])} glyphs "
+              f"for {prefix}: {', '.join([
+                mg.glyphName for mg in sealDB.missingGlyphs[prefix]
+              ])}",
+              file=fh_log)
 
 
     for line in fh_dup:
@@ -233,8 +306,8 @@ def main():
         continue
 
       toks = line.split("\t")
-      if args.verbose > 3:
-        print(toks)
+      if args.verbose > 2:
+        print(toks, file=fh_log)
       glyph_unco = toks[0]
       glyph_enc  = toks[1]
       mcjks      = toks[2].split(",")
@@ -258,24 +331,40 @@ def main():
         _ge = sealDB.getHorizontalGlyphForPrefix(glyph_enc, _prfx)
         mg.duplicated = _ge
         mg.duplicatedUCS = sealDB.glyph2ucs[_ge]
+        mg.meta.comment_mcjks = mcjks
 
     for prefix, missingGlyphs in sealDB.missingGlyphs.items():
       for mg in missingGlyphs:
+        if mg.duplicated is None:
+          print("*** {mg.glyphName} is not resolved", fh_log)
+          continue
         if mg.duplicatedUCS not in sealDB.ucs2dups:
-          sealDB.ucs2dups[mg.duplicatedUCS] = set()
-        sealDB.ucs2dups[mg.duplicatedUCS].add(mg.glyphName)
+          sealDB.ucs2dups[mg.duplicatedUCS] = {}
+        if mg.glyphName not in sealDB.ucs2dups[mg.duplicatedUCS]:
+          sealDB.ucs2dups[mg.duplicatedUCS][mg.glyphName] = mg
 
-    prefixes = [ "TH", "C", "K", "D" ]
+    # print(sealDB.ucs2dups)
+    prefixes = [ "TH-", "C-", "K-", "D-" ]
     if args.verbose > 1:
-      print(sealDB.ucs2dups.keys())
+      print(sealDB.ucs2dups.keys(), file=fh_log)
     for ucs_cp in sorted(sealDB.ucs2dups.keys()):
-      dups = " ".join(sorted(
-        list(sealDB.ucs2dups[ucs_cp]),
+      dups = sorted(
+        list(sealDB.ucs2dups[ucs_cp].keys()),
         key=lambda glyph_name: (
-          prefixes.index(glyph_name.split("-")[0]),
+          prefixes.index(split_glyph_name(glyph_name)[0]),
           glyph_name
         )
-      ))
+      )
+
+      mcjk_ss = sealDB.sealSources[ucs_cp]["kSEAL_MCJK"]
+      mcjks_comment = ",".join(sealDB.ucs2dups[ucs_cp][dups[0]].meta.comment_mcjks)
+      if args.verbose > 0:
+        annotated_mcjk_ss = mcjks_hex2utf8(mcjk_ss)
+        annotated_mcjks_comment = mcjk_annotate(mcjks_comment)
+        print(f"\n# SEAL {ucs_cp} MCJK {annotated_mcjk_ss} (in {args.seal_sources}), "
+              f"{annotated_mcjks_comment} (in {args.dup_tsv})")
+
+      dups = " ".join(dups)
       print(f"{ucs_cp}\tkSEAL_DUP\t{dups}")
 
 
