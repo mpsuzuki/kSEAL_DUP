@@ -10,10 +10,10 @@ from types import SimpleNamespace
 
 def parse_args():
   parser = argparse.ArgumentParser(
-    description="Insert kSEAL_DupSrc"
+    description="Insert kSEAL_SubstituteFor"
   )
-  parser.add_argument("--dup-property-name", default="kSEAL_DupSrc",
-    help="property name for duplicatd source info, default: kSEAL_DupSrc"
+  parser.add_argument("--dup-property-name", default="kSEAL_SubstituteFor",
+    help="property name for duplicatd source info, default: kSEAL_SubstituteFor"
   )
   parser.add_argument("--seal-sources", default="SealSources.txt",
     help="SealSource.txt without duplicated source property, default: SealSources.txt"
