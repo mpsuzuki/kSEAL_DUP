@@ -54,7 +54,7 @@
   <pre id="output"></pre>
 
   <script>
-    const output = document.getElementById("output");
+    const elemOutput = document.getElementById("output");
 
 
     const elemDropZone = document.getElementById("dropZone");
@@ -114,7 +114,7 @@
           const text = await response.text();
           summarize(text);
         } catch (error) {
-          output.textContent = `Failed to load URL: ${error.message}`;
+          elemOutput.textContent = `Failed to load URL: ${error.message}`;
         }
       }
     );
@@ -130,7 +130,7 @@
         const text = await response.text();
         display(summarize(text));
       } catch (error) {
-        output.textContent = `Failed to load URL: ${error.message}`;
+        elemOutput.textContent = `Failed to load URL: ${error.message}`;
       }
     });
  **********************************************************************/
@@ -173,7 +173,7 @@
 
     // Display result
     function display(data) {
-      output.textContent = JSON.stringify(data, null, 2);
+      elemOutput.textContent = JSON.stringify(data, null, 2);
     }
 
     // Collect glyph names as Set() object of each source
