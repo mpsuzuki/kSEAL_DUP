@@ -50,12 +50,12 @@ the traceability and utility of the Seal dataset.
 
 For example, current SealSources.txt gives some properties to U+3D3DD, like:
 ```
-U+3D3DD  kSEAL_THXSrc  TH-00939
-U+3D3DD  kSEAL_CCZSrc  C-00972
-U+3D3DD  kSEAL_QJZSrc  K-00945
-U+3D3DD  kSEAL_DYCSrc  D-00934
-U+3D3DD  kSEAL_MCJK  20BA2
-U+3D3DD  kSEAL_Rad  22.3D374 76.3D888
+U+3D3DD	kSEAL_THXSrc	TH-00939
+U+3D3DD	kSEAL_CCZSrc	C-00972
+U+3D3DD	kSEAL_QJZSrc	K-00945
+U+3D3DD	kSEAL_DYCSrc	D-00934
+U+3D3DD	kSEAL_MCJK	20BA2
+U+3D3DD	kSEAL_Rad	22.3D374 76.3D888
 ```
 
 Here, U+3D3DD is a character encoding TH-00939, C-00971, etc
