@@ -28,6 +28,10 @@
       border-color: #0066cc;
     }
 
+    #output {
+      font-size: 24px;
+    }
+
     div.ui-for-url { display: none; }
   </style>
 </head>
@@ -172,8 +176,19 @@
     }
 
     // Display result
-    function display(data) {
-      elemOutput.textContent = JSON.stringify(data, null, 2);
+    function display(summary) {
+      elemOutput.textContent = "";
+      for (const [src, p2g] of Object.entries(summary)) {
+        for (const [prfx, gs] of Object.entries(p2g)) {
+          if (gs.length === 0)
+            continue;
+          let comment = "# In the source " + src + ", " + prfx + "glyphs have " + String(gs.length) + " omissions\n";
+          elemOutput.textContent += comment;
+          // elemOutput.textContent += (gs.join(", ") + "\n");
+          elemOutput.textContent += (gs.join("\n") + "\n");
+          elemOutput.textContent += "#\n";
+        }
+      }
     }
 
     // Collect glyph names as Set() object of each source
