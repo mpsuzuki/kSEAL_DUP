@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SealSources Parser</title>
+</head>
+<body>
+
+  <h1>SealSources Parser</h1>
+
+  <div>
+    <h2>Load from File</h2>
+    <input type="file" id="fileInput">
+  </div>
+
+  <div>
+    <h2>Load from URL</h2>
+    <input
+      type="text"
+      id="urlInput"
+      size="80"
+      placeholder="https://example.com/SealSources-18.0.0.txt">
+    <button id="loadUrlButton">Load</button>
+  </div>
+
+  <hr>
+
+  <pre id="output"></pre>
+
+  <script>
+    const output = document.getElementById("output");
+
+    // Load from local file
+    document.getElementById("fileInput").addEventListener(
+      "change",
+      async (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+
+        const text = await file.text();
+        display(parseSealSources(text));
+      }
+    );
+
+    // Load from URL
+    document.getElementById("loadUrlButton").addEventListener(
+      "click",
+      async () => {
+        const url =
+          document.getElementById("urlInput").value.trim();
+
+        if (!url) {
+          return;
+        }
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(
+              `HTTP ${response.status}`
+            );
+          }
+
+          const text = await response.text();
+
+          display(parseSealSources(text));
+        } catch (error) {
+          output.textContent =
+            `Failed to load URL: ${error.message}`;
+        }
+      }
+    );
+
+    // Parse SealSources-style text data
+    function parseSealSources(text) {
+      const data = {};
+
+      for (const line of text.split(/\r?\n/)) {
+        const trimmed = line.trim();
+
+        // Skip empty lines and comments
+        if (
+          trimmed.length === 0 ||
+          trimmed.startsWith("#")
+        ) {
+          continue;
+        }
+
+        // Extract:
+        // code point, property name, value field
+        const match =
+          trimmed.match(
+            /^(\S+)\s+(\S+)\s+(.+)$/
+          );
+
+        if (!match) {
+          continue;
+        }
+
+        const [
+          ,
+          codePoint,
+          property,
+          valueText
+        ] = match;
+
+        if (!data[codePoint]) {
+          data[codePoint] = {
+            codePoint
+          };
+        }
+
+        const values =
+          valueText.trim().split(/\s+/);
+
+        data[codePoint][property] =
+          values.length === 1
+            ? values[0]
+            : values;
+      }
+
+      return data;
+    }
+
+    // Display parsed result
+    function display(data) {
+      output.textContent =
+        JSON.stringify(data, null, 2);
+    }
+  </script>
+
+</body>
+</html>
