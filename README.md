@@ -1,3 +1,7 @@
+# Omitted Glyph Names in SealSources.txt
+
+Online demo is available at: [https://mpsuzuki.github.io/kSEAL_DUP/](https://mpsuzuki.github.io/kSEAL_DUP/).
+
 ## Duplicated Entries.
 
 In some cases, the original _Shuowen Jiezi_ lists the exact same
