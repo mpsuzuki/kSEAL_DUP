@@ -1,25 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
   <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
   <title>SealSources Parser</title>
+  <style>
+    #dropZone {
+      width: 100%;
+      max-width: 600px;
+      height: 150px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border: 2px dashed #888;
+      border-radius: 8px;
+
+      background: #f8f8f8;
+      color: #444;
+
+      font-family: sans-serif;
+    }
+
+    #dropZone.dragover {
+      background: #e8f2ff;
+      border-color: #0066cc;
+    }
+
+    div.ui-for-url { display: none; }
+  </style>
 </head>
 <body>
 
-  <h1>SealSources Parser</h1>
+  <h1>Lookup Omitted Glyphs from SealSources.txt</h1>
 
-  <div>
-    <h2>Load from File</h2>
-    <input type="file" id="fileInput">
+  <div id="dropZone">
+    Drop SealSources.txt here, or click to select a file.
+    <input type="file" id="fileInput" hidden>
   </div>
 
-  <div>
-    <h2>Load from URL</h2>
+  <div class="ui-for-url">
     <input
       type="text"
       id="urlInput"
       size="80"
-      placeholder="https://example.com/SealSources-18.0.0.txt">
+      placeholder="SealSources.txt">
     <button id="loadUrlButton">Load</button>
   </div>
 
@@ -30,17 +56,43 @@
   <script>
     const output = document.getElementById("output");
 
+
+    const elemDropZone = document.getElementById("dropZone");
+    elemDropZone.addEventListener("dragover", (evt) => {
+      evt.preventDefault();
+      elemDropZone.classList.add("dragover");
+    });
+    elemDropZone.addEventListener("dragleave", (evt) => {
+      elemDropZone.classList.remove("dragover");
+    });
+    elemDropZone.addEventListener("drop", async (evt) => {
+      evt.preventDefault();
+      elemDropZone.classList.remove("dragover");
+
+      if (evt.dataTransfer.files.length === 0)
+        return;
+
+      const file = evt.dataTransfer.files[0];
+      if (!file)
+        return;
+
+      const text = await file.text();
+      summarize(text);
+    });
+    elemDropZone.addEventListener("click", (evt) => {
+      document.getElementById("fileInput").click();
+    });
+
     // Load from local file
     document.getElementById("fileInput").addEventListener(
       "change",
-      async (event) => {
-        const file = event.target.files[0];
-        if (!file) {
+      async (evt) => {
+        const file = evt.target.files[0];
+        if (!file)
           return;
-        }
 
         const text = await file.text();
-        display(parseSealSources(text));
+        summarize(text);
       }
     );
 
@@ -48,31 +100,47 @@
     document.getElementById("loadUrlButton").addEventListener(
       "click",
       async () => {
-        const url =
-          document.getElementById("urlInput").value.trim();
+        const url = document.getElementById("urlInput").value.trim();
 
-        if (!url) {
+        if (!url)
           return;
-        }
 
         try {
           const response = await fetch(url);
-
           if (!response.ok) {
-            throw new Error(
-              `HTTP ${response.status}`
-            );
+            throw new Error(`HTTP ${response.status}`);
           }
 
           const text = await response.text();
-
-          display(parseSealSources(text));
+          summarize(text);
         } catch (error) {
-          output.textContent =
-            `Failed to load URL: ${error.message}`;
+          output.textContent = `Failed to load URL: ${error.message}`;
         }
       }
     );
+
+/**********************************************************************
+    window.addEventListener("load", async() => {
+      try {
+        const response = await fetch("SealSources.txt");
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const text = await response.text();
+        display(summarize(text));
+      } catch (error) {
+        output.textContent = `Failed to load URL: ${error.message}`;
+      }
+    });
+ **********************************************************************/
+
+    function summarize(text) {
+      const parsedData = parseSealSources(text);
+      const summary = summarizeOmittedGlyphs(parsedData);
+      display(summary);
+      return summary;
+    }
 
     // Parse SealSources-style text data
     function parseSealSources(text) {
@@ -82,54 +150,95 @@
         const trimmed = line.trim();
 
         // Skip empty lines and comments
-        if (
-          trimmed.length === 0 ||
-          trimmed.startsWith("#")
-        ) {
+        if (trimmed.length === 0 || trimmed.startsWith("#"))
           continue;
-        }
 
         // Extract:
         // code point, property name, value field
-        const match =
-          trimmed.match(
-            /^(\S+)\s+(\S+)\s+(.+)$/
-          );
-
-        if (!match) {
+        const match = trimmed.match(/^(\S+)\s+(\S+)\s+(.+)$/);
+        if (!match)
           continue;
-        }
 
-        const [
-          ,
-          codePoint,
-          property,
-          valueText
-        ] = match;
+        const [, codePoint, property, valueText] = match;
 
-        if (!data[codePoint]) {
-          data[codePoint] = {
-            codePoint
-          };
-        }
+        if (!data[codePoint])
+          data[codePoint] = { codePoint };
 
-        const values =
-          valueText.trim().split(/\s+/);
-
-        data[codePoint][property] =
-          values.length === 1
-            ? values[0]
-            : values;
+        const values = valueText.trim().split(/\s+/);
+        data[codePoint][property] = (values.length === 1) ? values[0] : values;
       }
 
       return data;
     }
 
-    // Display parsed result
+    // Display result
     function display(data) {
-      output.textContent =
-        JSON.stringify(data, null, 2);
+      output.textContent = JSON.stringify(data, null, 2);
     }
+
+    // Collect glyph names as Set() object of each source
+    function collectGlyphNames(data) {
+      const src2glyphs = new Map();
+      for (const [ucs, dic] of Object.entries(data)) {
+        for (const [propName, propValue] of Object.entries(dic)) {
+          if (!propName.endsWith("Src"))
+            continue;
+          const src = propName.split("_", 2).pop().slice(0,-3);
+          if (!src2glyphs.has(src)) {
+            src2glyphs.set(src, new Set());
+          }
+
+          src2glyphs.get(src).add(propValue);
+        }
+      }
+      return src2glyphs;
+    }
+
+    function synthesizeGlyphNames(prefix, maxValidSequence, sequenceWidth) {
+      const glyphNames = new Set();
+      for (let i = 1; i <= maxValidSequence; i++) {
+        glyphNames.add(
+          prefix + String(i).padStart(sequenceWidth, "0")
+        );
+      }
+      return glyphNames;
+    }
+
+    function createPrefix2Glyphs(setGlyphs) {
+      const prefix2glyphs = new Map();
+      setGlyphs.forEach(gn => {
+        const prefix = gn.replace(/[0-9]+$/, "");
+        if (!prefix2glyphs.has(prefix)) {
+          prefix2glyphs.set(prefix, new Set());
+        }
+        prefix2glyphs.get(prefix).add(gn);
+      });
+      return prefix2glyphs;
+    }
+
+    function summarizeOmittedGlyphs(data) {
+      const summary = {};
+      const src2glyphsPerPrefix = new Map();
+      const _s2g = collectGlyphNames(data);
+      for (const [srcName, setGlyphs] of _s2g.entries()) {
+        src2glyphsPerPrefix.set(srcName, createPrefix2Glyphs(setGlyphs));
+      }
+      for (const [srcName, prefix2glyphs] of src2glyphsPerPrefix.entries()) {
+        summary[srcName] = {};
+        for (const [prefix, setGlyphsCoded] of prefix2glyphs.entries()) {
+          const sortedGlyphs = Array.from(setGlyphsCoded).sort((a, b) => a - b);
+          const lastGlyph = sortedGlyphs.pop();
+          const lastSequence = lastGlyph.substring(prefix.length);
+          const setGlyphsSynthesized = synthesizeGlyphNames(prefix, parseInt(lastSequence), lastSequence.length);
+          const setGlyphsOmitted = setGlyphsSynthesized.difference(setGlyphsCoded);
+          const arrGlyphsOmitted = Array.from(setGlyphsOmitted).sort((a, b) => a - b);
+          summary[srcName][prefix] = arrGlyphsOmitted;
+        }
+      }
+      return summary;
+    }
+
+
   </script>
 
 </body>
