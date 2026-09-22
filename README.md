@@ -49,12 +49,14 @@ as a complementary data field—would significantly enhance
 the traceability and utility of the Seal dataset.
 
 For example, current SealSources.txt gives some properties to U+3D3DD, like:
+```
 U+3D3DD kSEAL_THXSrc TH-00939
 U+3D3DD kSEAL_CCZSrc C-00972
 U+3D3DD kSEAL_QJZSrc K-00945
 U+3D3DD kSEAL_DYCSrc D-00934
-U+3D3DD kSEAL_MCJK 20BA2
-U+3D3DD kSEAL_Rad 22.3D374 76.3D888
+U+3D3DD kSEAL_MCJK  20BA2
+U+3D3DD kSEAL_Rad  22.3D374 76.3D888
+```
 
 Here, U+3D3DD is a character encoding TH-00939, C-00971, etc
 ﻿under the radical 23.3D374﻿, and it unifies another entry under
@@ -62,4 +64,6 @@ Here, U+3D3DD is a character encoding TH-00939, C-00971, etc
 ﻿was omitted.
 
 I propose to add something like:
-U+3D3DD kSEAL_DupSrc TH-02078 C-02157 K-02083 D-02061 
+```
+U+3D3DD kSEAL_SubstituteFor TH-02078 C-02157 K-02083 D-02061 
+```
