@@ -7,10 +7,11 @@
   <style>
     #dropZone {
       width: 100%;
-      max-width: 600px;
+      max-width: 700px;
       height: 150px;
 
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
 
@@ -28,11 +29,30 @@
       border-color: #0066cc;
     }
 
+    .advancedContents {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5em;
+    }
+
+    .advancedExpanded {
+      max-height: 0px;
+      overflow: hidden;
+      opacity: 0;
+      transition:
+        max-height 1s ease,
+        opacity 0.5s ease;
+    }
+
+    details[open] .advancedContents {
+      max-height: 200px;
+      opacity: 1;
+    }
+
     #output {
       font-size: 24px;
     }
-
-    div.ui-for-url { display: none; }
   </style>
 </head>
 <body>
@@ -40,17 +60,19 @@
   <h1>Lookup Omitted Glyph Names from SealSources.txt</h1>
 
   <div id="dropZone">
-    Drop SealSources.txt here, or click to select a file in your computer.
-    <input type="file" id="fileInput" hidden>
-  </div>
-
-  <div class="ui-for-url">
-    <input
-      type="text"
-      id="urlInput"
-      size="80"
-      placeholder="SealSources.txt">
-    <button id="loadUrlButton">Load</button>
+    <div>
+      Drop SealSources.txt here, or click to select a file in your computer.
+      <input type="file" id="fileInput" hidden>
+    </div>
+    <div id="advanced">
+      <details id="advancedDetails" class="advancedContents">
+        <summary>Advanced</summary>
+        <div class="advancedContents advancedExpanded">
+          <input type="text" size="92" id="urlInput">
+          <button id="fetchUrlButton">Fetch</button>
+        </div>
+      </details>
+    </div>
   </div>
 
   <hr>
@@ -58,6 +80,9 @@
   <pre id="output"></pre>
 
   <script>
+    const URL_GH_UNICODE_TOOLS = "https://raw.githubusercontent.com/unicode-org/unicodetools"
+    const URL_GH_UCD = URL_GH_UNICODE_TOOLS + "/main/unicodetools/data/ucd";
+    const URL_GH_SEALSRC = URL_GH_UCD + "/dev/SealSources.txt";
     const elemOutput = document.getElementById("output");
 
 
@@ -87,6 +112,28 @@
       document.getElementById("fileInput").click();
     });
 
+
+    const elemAdvanced = document.getElementById("advanced");
+    elemAdvanced.addEventListener("click", (evt) => {
+      evt.stopPropagation();
+    });
+
+    async function typeIntoInput(elem, text) {
+      elem.value = "";
+      for (const ch of text) {
+        elem.value += ch;
+        await new Promise(rslv => setTimeout(rslv, 8));
+      }
+    }
+    const elemUrlInput = document.getElementById("urlInput");
+    const elemAdvancedDetails = document.getElementById("advancedDetails");
+    elemAdvancedDetails.addEventListener("toggle", (evt) => {
+      if (elemAdvancedDetails.open && urlInput.value === "") {
+        typeIntoInput(elemUrlInput, URL_GH_SEALSRC);
+      }
+    });
+
+
     // Load from local file
     document.getElementById("fileInput").addEventListener(
       "change",
@@ -101,7 +148,7 @@
     );
 
     // Load from URL
-    document.getElementById("loadUrlButton").addEventListener(
+    document.getElementById("fetchUrlButton").addEventListener(
       "click",
       async () => {
         const url = document.getElementById("urlInput").value.trim();
@@ -122,22 +169,6 @@
         }
       }
     );
-
-/**********************************************************************
-    window.addEventListener("load", async() => {
-      try {
-        const response = await fetch("SealSources.txt");
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const text = await response.text();
-        display(summarize(text));
-      } catch (error) {
-        elemOutput.textContent = `Failed to load URL: ${error.message}`;
-      }
-    });
- **********************************************************************/
 
     function summarize(text) {
       const parsedData = parseSealSources(text);
