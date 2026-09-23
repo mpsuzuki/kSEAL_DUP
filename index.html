@@ -105,7 +105,9 @@
       if (!file)
         return;
 
+      elemOutput.textContent = "";
       const text = await file.text();
+      elemOutput.textContent += ("# " + text.length.toString().padStart(7, " ") + " bytes text loaded from local file\n");
       summarize(text);
     });
     elemDropZone.addEventListener("click", (evt) => {
@@ -142,7 +144,9 @@
         if (!file)
           return;
 
+        elemOutput.textContent = "";
         const text = await file.text();
+        elemOutput.textContent += ("# " + text.length.toString().padStart(7, " ") + " bytes text loaded from local file\n");
         summarize(text);
       }
     );
@@ -162,7 +166,9 @@
             throw new Error(`HTTP ${response.status}`);
           }
 
+          elemOutput.textContent = "";
           const text = await response.text();
+          elemOutput.textContent += ("# " + text.length.toString().padStart(7, " ") + " bytes text loaded from network\n");
           summarize(text);
         } catch (error) {
           elemOutput.textContent = `Failed to load URL: ${error.message}`;
@@ -172,6 +178,7 @@
 
     function summarize(text) {
       const parsedData = parseSealSources(text);
+      elemOutput.textContent += "#\n";
       const summary = summarizeOmittedGlyphs(parsedData);
       display(summary);
       return summary;
@@ -181,7 +188,9 @@
     function parseSealSources(text) {
       const data = {};
 
+      let numLines = 0;
       for (const line of text.split(/\r?\n/)) {
+        numLines += 1;
         const trimmed = line.trim();
 
         // Skip empty lines and comments
@@ -202,13 +211,14 @@
         const values = valueText.trim().split(/\s+/);
         data[codePoint][property] = (values.length === 1) ? values[0] : values;
       }
+      elemOutput.textContent += ("# " + numLines.toString().padStart(7, " ") + " lines parsed\n");
+      elemOutput.textContent += ("# " + Object.keys(data).length.toString().padStart(7, " ") + " codepoints defined\n");
 
       return data;
     }
 
     // Display result
     function display(summary) {
-      elemOutput.textContent = "";
       for (const [src, p2g] of Object.entries(summary)) {
         for (const [prfx, gs] of Object.entries(p2g)) {
           if (gs.length === 0)
