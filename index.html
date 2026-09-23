@@ -80,11 +80,11 @@
   <pre id="output"></pre>
 
   <script>
+    const LEN_FORMAT_DIGITS = 7;
     const URL_GH_UNICODE_TOOLS = "https://raw.githubusercontent.com/unicode-org/unicodetools"
     const URL_GH_UCD = URL_GH_UNICODE_TOOLS + "/main/unicodetools/data/ucd";
     const URL_GH_SEALSRC = URL_GH_UCD + "/dev/SealSources.txt";
     const elemOutput = document.getElementById("output");
-
 
     const elemDropZone = document.getElementById("dropZone");
     elemDropZone.addEventListener("dragover", (evt) => {
@@ -105,10 +105,7 @@
       if (!file)
         return;
 
-      elemOutput.textContent = "";
-      const text = await file.text();
-      elemOutput.textContent += ("# " + text.length.toString().padStart(7, " ") + " bytes text loaded from local file\n");
-      summarize(text);
+      procLocalFileSingle(file);
     });
     elemDropZone.addEventListener("click", (evt) => {
       document.getElementById("fileInput").click();
@@ -137,6 +134,21 @@
 
 
     // Load from local file
+    async function procLocalFileSingle(file) {
+      elemOutput.textContent = "";
+      const t0   = performance.now();
+      const text = await file.text();
+      const t1   = performance.now();
+      elemOutput.textContent += (
+        `# ${
+          text.length.toString().padStart(LEN_FORMAT_DIGITS, " ")
+        } bytes text loaded from local file, in ${
+          (t1 - t0).toFixed(1)
+        } ms\n`
+      );
+      summarize(text);
+    }
+
     document.getElementById("fileInput").addEventListener(
       "change",
       async (evt) => {
@@ -144,10 +156,7 @@
         if (!file)
           return;
 
-        elemOutput.textContent = "";
-        const text = await file.text();
-        elemOutput.textContent += ("# " + text.length.toString().padStart(7, " ") + " bytes text loaded from local file\n");
-        summarize(text);
+        procLocalFileSingle(file);
       }
     );
 
@@ -167,8 +176,14 @@
           }
 
           elemOutput.textContent = "";
+          const t0 = performance.now();
           const text = await response.text();
-          elemOutput.textContent += ("# " + text.length.toString().padStart(7, " ") + " bytes text loaded from network\n");
+          const t1 = performance.now();
+          elemOutput.textContent += ( `# ${
+            text.length.toString().padStart(LEN_FORMAT_DIGITS, " ")
+          } bytes text loaded from network, in ${
+            (t1 - t0).toFixed(1)
+          } ms\n`);
           summarize(text);
         } catch (error) {
           elemOutput.textContent = `Failed to load URL: ${error.message}`;
@@ -186,6 +201,7 @@
 
     // Parse SealSources-style text data
     function parseSealSources(text) {
+      const t0 = performance.now();
       const data = {};
 
       let numLines = 0;
@@ -211,8 +227,15 @@
         const values = valueText.trim().split(/\s+/);
         data[codePoint][property] = (values.length === 1) ? values[0] : values;
       }
-      elemOutput.textContent += ("# " + numLines.toString().padStart(7, " ") + " lines parsed\n");
-      elemOutput.textContent += ("# " + Object.keys(data).length.toString().padStart(7, " ") + " codepoints defined\n");
+      const t1 = performance.now();
+      elemOutput.textContent += (`# ${
+          numLines.toString().padStart(LEN_FORMAT_DIGITS, " ")
+        } lines parsed, in ${
+          (t1 - t0).toFixed(1)
+        } ms\n`);
+      elemOutput.textContent += (`# ${
+        Object.keys(data).length.toString().padStart(LEN_FORMAT_DIGITS, " ")
+      } codepoints defined\n`);
 
       return data;
     }
