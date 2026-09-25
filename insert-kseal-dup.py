@@ -8,7 +8,7 @@ from pathlib import Path
 from contextlib import nullcontext
 from types import SimpleNamespace
 
-TAGNAME = "SubstituteFor"
+TAGNAME = "AdditionalSrc"
 
 def parse_args():
   parser = argparse.ArgumentParser(
@@ -353,13 +353,16 @@ def main():
     if args.verbose > 1:
       print(sealDB.ucs2dups.keys(), file=fh_log)
     for ucs_cp in sorted(sealDB.ucs2dups.keys()):
-      dups = sorted(
-        list(sealDB.ucs2dups[ucs_cp].keys()),
-        key=lambda glyph_name: (
-          prefixes.index(split_glyph_name(glyph_name)[0]),
-          glyph_name
+      if args.prefixes:
+        dups = sorted(
+          list(sealDB.ucs2dups[ucs_cp].keys()),
+          key=lambda glyph_name: (
+            args.prefixes.index(split_glyph_name(glyph_name)[0]),
+            glyph_name
+          )
         )
-      )
+      else:
+        dups = sorted(list(sealDB.ucs2dups[ucs_cp].keys()))
 
       mcjk_ss = sealDB.sealSources[ucs_cp]["kSEAL_MCJK"]
       mcjks_comment = ",".join(sealDB.ucs2dups[ucs_cp][dups[0]].meta.comment_mcjks)
