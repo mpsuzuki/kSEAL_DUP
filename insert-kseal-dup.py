@@ -8,12 +8,14 @@ from pathlib import Path
 from contextlib import nullcontext
 from types import SimpleNamespace
 
+TAGNAME = "SubstituteFor"
+
 def parse_args():
   parser = argparse.ArgumentParser(
-    description="Insert kSEAL_SubstituteFor"
+    description=f"Insert kSEAL_{TAGNAME}"
   )
-  parser.add_argument("--dup-property-name", default="kSEAL_SubstituteFor",
-    help="property name for duplicatd source info, default: kSEAL_SubstituteFor"
+  parser.add_argument("--dup-property-name", default=f"kSEAL_{TAGNAME}",
+    help=f"property name for duplicatd source info, default: kSEAL_{TAGNAME}"
   )
   parser.add_argument("--seal-sources", default="SealSources.txt",
     help="SealSource.txt without duplicated source property, default: SealSources.txt"
