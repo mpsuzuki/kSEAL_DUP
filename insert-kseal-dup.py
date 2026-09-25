@@ -30,6 +30,9 @@ def parse_args():
   parser.add_argument("--log", default=None,
     help="filename to log, default: None (stderr)"
   )
+  parser.add_argument("--boiler-plate", "--boiler", "--bp",
+    help="boilerplate text to insert as a header of output TSV"
+  )
   args = parser.parse_args()
 
   if args.seal_sources == "-":
@@ -46,6 +49,11 @@ def parse_args():
     args.ctx_log = nullcontext(sys.stderr)
   else:
     args.ctx_log = open(args.log, "w+", encoding="utf-8")
+
+  if args.boiler_plate is None:
+    args.ctx_boiler_plate = None
+  else:
+    args.ctx_boiler_plate = open(args.boiler_plate, "r", encoding="utf-8")
 
   return args
 
@@ -352,6 +360,17 @@ def main():
     prefixes = [ "TH-", "C-", "K-", "D-" ]
     if args.verbose > 1:
       print(sealDB.ucs2dups.keys(), file=fh_log)
+
+    if args.ctx_boiler_plate:
+      with args.ctx_boiler_plate as fh_bp:
+        for line in fh_bp:
+          line_expanded = line.rstrip("\r\n")
+          if "${TAGNAME}" in line_expanded:
+            line_expanded = line_expanded.replace("${TAGNAME}", TAGNAME)
+          if "${NUM_RECORDS}" in line_expanded:
+            line_expanded = line_expanded.replace("${NUM_RECORDS}", str(len(sealDB.ucs2dups)))
+          print(line_expanded)
+
     for ucs_cp in sorted(sealDB.ucs2dups.keys()):
       if args.prefixes:
         dups = sorted(
