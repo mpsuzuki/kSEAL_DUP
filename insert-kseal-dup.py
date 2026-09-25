@@ -33,6 +33,9 @@ def parse_args():
   parser.add_argument("--boiler-plate", "--boiler", "--bp",
     help="boilerplate text to insert as a header of output TSV"
   )
+  parser.add_argument("--order-values", "--order", "--ov", action="store_true",
+    help="order the glyph names with code chart column."
+  )
   args = parser.parse_args()
 
   if args.seal_sources == "-":
@@ -54,6 +57,12 @@ def parse_args():
     args.ctx_boiler_plate = None
   else:
     args.ctx_boiler_plate = open(args.boiler_plate, "r", encoding="utf-8")
+
+  if args.order_values:
+    args.prefixes = [ "TH-", "C-", "K-", "D-" ]
+  else:
+    args.prefixes = None
+
 
   return args
 
@@ -357,7 +366,6 @@ def main():
           sealDB.ucs2dups[mg.duplicatedUCS][mg.glyphName] = mg
 
     # print(sealDB.ucs2dups)
-    prefixes = [ "TH-", "C-", "K-", "D-" ]
     if args.verbose > 1:
       print(sealDB.ucs2dups.keys(), file=fh_log)
 
