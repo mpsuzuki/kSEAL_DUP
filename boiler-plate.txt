@@ -7,7 +7,7 @@
 # Category	Other data
 # Introduced	TBD
 # Delimiter	Space
-# Syntax	([CDK]|TH)-‍\d{5}
+# Syntax	([CDK]|TH)-\d{5}
 # Default	N/A
 # Description	One or more kSEAL_CCZSrc, kSEAL_DYCSrc,
 #  kSEAL_QJZSrc, or kSEAL_THXSrc property values that correspond
