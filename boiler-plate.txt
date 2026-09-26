@@ -2,14 +2,14 @@
 #
 # UAX #60 Additions:
 #
-# Property	kSEAL_AdditionalSrc
-# Status	Provisional
-# Category	Other data
-# Introduced	TBD
-# Delimiter	Space
-# Syntax	([CDK]|TH)-\d{5}
-# Default	N/A
-# Description	One or more kSEAL_CCZSrc, kSEAL_DYCSrc,
+# Property:	kSEAL_AdditionalSrc
+# Status:	Provisional
+# Category:	Other data
+# Introduced:	TBD
+# Delimiter:	Space
+# Syntax:	([CDK]|TH)-\d{5}
+# Default:	N/A
+# Description:	One or more kSEAL_CCZSrc, kSEAL_DYCSrc,
 #  kSEAL_QJZSrc, or kSEAL_THXSrc property values that correspond
 #  to source references that were omitted due to duplicate glyphs
 #  in a source.
