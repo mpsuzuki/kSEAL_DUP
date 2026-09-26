@@ -6,6 +6,12 @@ kseal_additional.tsv: SealSources.txt duplicates.tsv
 		--boiler-plate boiler-plate.txt \
 		> $@
 
+clean:
+	rm -f kseal_additional.tsv
+
+veryclean:
+	rm -f SealSources.txt kseal_additional.tsv
+
 SealSources.txt:
 	wget -i SealSources.url
 
