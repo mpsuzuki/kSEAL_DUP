@@ -14,22 +14,10 @@ repertoire.
 Consequently, these deliberate omissions result in gaps (skips) in the
 sequential source indexes within the code chart.
 
-For example, the Small Seal character of "𠮢" is coded at U+3D3DD
-(TH-00939, C-00972, K-00945, D-00934), the code position is located
-under the radical "口."
-As defined in SealSources.txt, the kSEAL_Rad property for U+3D3DD has
-multiple space-separated values: "22.3D374" and "76.3D888".
-The former "22.3D374" is for the 22nd radical corresponding to "口",
-and "76.3D888" is for the 76th radical corresponding to "又".
-It indicates that this character was duplicated in SWJZ.
-TH-02078, C-02157, K-02083, D-02061 are missing in the code chart,
-they correspond to the position of the duplicated "𠮢" appearing
-under the radical "又". 
-
 ---
 
-I want to ﻿propose an enhancement to SealSources.txt documenting
-﻿﻿duplicated-and-unencoded source references in Seal.
+This is an attempt to propose an enhancement to SealSources.txt
+documenting duplicated-and-unencoded source references in Seal.
 
 Currently, SealSources.txt does not explicitly provide information on
 which specific duplicated entries from the original Shuowen Jiezi (SWJZ)
@@ -43,9 +31,9 @@ identified as duplicates and consequently dropped from the repertoire.
 Although the multi-valued kSEAL_Rad property serves as an initial indicator
 that a given code point corresponds to multiple radicals in SWJZ,
 it does not specify the precise structural locations or source indexes
-of the omitted duplicate entries. Providing this missing source
--reference data—either as an informative note in the text or
-as a complementary data field—would significantly enhance
+of the omitted duplicate entries. Providing this missing
+source-reference data -- either as an informative note in the text or
+as a complementary data field -- would significantly enhance
 the traceability and utility of the Seal dataset.
 
 For example, current SealSources.txt gives some properties to U+3D3DD, like:
@@ -58,12 +46,26 @@ U+3D3DD	kSEAL_MCJK	20BA2
 U+3D3DD	kSEAL_Rad	22.3D374 76.3D888
 ```
 
-Here, U+3D3DD is a character encoding TH-00939, C-00971, etc
-﻿under the radical 23.3D374﻿, and it unifies another entry under
-﻿the radical 74.3D888. But it is hard to identify which SWJZ entry
-﻿was omitted.
+Here, the Small Seal character of "𠮢" (MCJK U+20BA2) is coded at U+3D3DD
+(TH-00939, C-00972, K-00945, D-00934), the code position is located
+under the radical "口."
+As defined in SealSources.txt, the kSEAL_Rad property for U+3D3DD has
+multiple space-separated values: "22.3D374" and "76.3D888".
+The former "22.3D374" is for the 22nd radical corresponding to "口",
+and "76.3D888" is for the 76th radical corresponding to "又".
+It indicates that this character was duplicated in SWJZ.
+But it is hard to identify which SWJZ entry was omitted.
+In addition, some entries related with the duplicated glyphs do
+not have the multiple values for kSEAL_Rad, for example, if the
+duplicated glyphs are found in same radical, its kSEAL_Rad would
+be single value property.
 
-I propose to add something like:
+The proposed workaround for this issue is an addition of new
+properties like:
 ```
-U+3D3DD kSEAL_SubstituteFor TH-02078 C-02157 K-02083 D-02061 
+U+3D3DD	kSEAL_AdditionalSrc	C-02157 D-02061 K-02083 TH-02078
 ```
+
+The values means the glyph names of the omitted entries.
+The users looking for a presentation glyph for these omitted glyphs,
+they can use the glyph for U+3D3DD as a fallback glyph.
