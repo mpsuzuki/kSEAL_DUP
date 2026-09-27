@@ -33,7 +33,7 @@ def parse_args():
   parser.add_argument("--boiler-plate", "--boiler", "--bp",
     help="boilerplate text to insert as a header of output TSV"
   )
-  parser.add_argument("--order-values", "--order", "--ov", action="store_true",
+  parser.add_argument("--order-values", "--order", "--ov", type=str,
     help="order the glyph names with code chart column."
   )
   args = parser.parse_args()
@@ -58,8 +58,8 @@ def parse_args():
   else:
     args.ctx_boiler_plate = open(args.boiler_plate, "r", encoding="utf-8")
 
-  if args.order_values:
-    args.prefixes = [ "TH-", "C-", "K-", "D-" ]
+  if args.order_values is not None:
+    args.prefixes = args.order_values.split(",")
   else:
     args.prefixes = None
 

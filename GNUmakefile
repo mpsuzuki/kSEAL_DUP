@@ -3,6 +3,7 @@ kseal_additional.tsv: SealSources.txt duplicates.tsv
 		--dup-property-name=kSEAL_AdditionalSrc \
 		--seal-sources SealSources.txt \
 		--dup-tsv duplicates.tsv \
+		--order-values TH-,C-,K-,D- \
 		--boiler-plate boiler-plate.txt \
 		> $@
 
