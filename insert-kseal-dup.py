@@ -36,6 +36,9 @@ def parse_args():
   parser.add_argument("--order-values", "--order", "--ov", type=str,
     help="order the glyph names with code chart column."
   )
+  parser.add_argument("--eof-line", "--eof", action="store_true",
+    help="emit '# EOF' line at the end of file"
+  )
   args = parser.parse_args()
 
   if args.seal_sources == "-":
@@ -402,6 +405,8 @@ def main():
       dups = " ".join(dups)
       print(f"{ucs_cp}\t{args.dup_property_name}\t{dups}")
 
+    if args.eof_line:
+      print("# EOF")
 
 if __name__ == "__main__":
   main()
