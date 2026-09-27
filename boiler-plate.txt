@@ -2,17 +2,14 @@
 #
 # UAX #60 Additions:
 #
-# Property:	kSEAL_AdditionalSrc
+# Property:	kSEAL_${TAGNAME}
 # Status:	Provisional
 # Category:	Other data
 # Introduced:	TBD
 # Delimiter:	Space
 # Syntax:	([CDK]|TH)-\d{5}
 # Default:	N/A
-# Description:	One or more kSEAL_CCZSrc, kSEAL_DYCSrc,
-#  kSEAL_QJZSrc, or kSEAL_THXSrc property values that correspond
-#  to source references that were omitted due to duplicate glyphs
-#  in a source.
+# Description:	One or more kSEAL_THXSrc, kSEAL_CCZSrc, kSEAL_QJZSrc, or kSEAL_DYCSrc property values that correspond to source references that were omitted due to duplicate glyphs in a source. The order of the source references follows the order in the code charts.
 #
 # ${NUM_RECORDS} New SealSources.txt Records:
 #
