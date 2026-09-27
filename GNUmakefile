@@ -1,4 +1,6 @@
-kseal_additional.tsv: SealSources.txt duplicates.tsv
+target = kSEAL_AdditionalSrc.txt
+
+$(target): SealSources.txt duplicates.tsv
 	python3 ./insert-kseal-dup.py \
 		--dup-property-name=kSEAL_AdditionalSrc \
 		--seal-sources SealSources.txt \
@@ -9,10 +11,10 @@ kseal_additional.tsv: SealSources.txt duplicates.tsv
 		> $@
 
 clean:
-	rm -f kseal_additional.tsv
+	rm -f $(target)
 
 veryclean:
-	rm -f SealSources.txt kseal_additional.tsv
+	rm -f SealSources.txt $(target)
 
 SealSources.txt:
 	wget -i SealSources.url
