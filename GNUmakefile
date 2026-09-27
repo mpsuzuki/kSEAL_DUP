@@ -5,6 +5,7 @@ kseal_additional.tsv: SealSources.txt duplicates.tsv
 		--dup-tsv duplicates.tsv \
 		--order-values TH-,C-,K-,D- \
 		--boiler-plate boiler-plate.txt \
+		--eof-line \
 		> $@
 
 clean:
