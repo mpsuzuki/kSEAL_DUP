@@ -32,7 +32,7 @@ veryclean:
 SealSources.txt:
 	wget -i SealSources.url
 
-$(stem)_tmp_lores.pdf: $(stem).pdf
+$(stem)_tmp_lores.pdf: $(stem).pdf $(stem)_Appendix_lores.pdf
 	rm -f $@
 	qpdf \
 		--empty --pages \
@@ -40,7 +40,7 @@ $(stem)_tmp_lores.pdf: $(stem).pdf
 		kSEAL_AdditionalSrc_Appendix_lores.pdf 1-z \
 		-- kSEAL_AdditionalSrc_tmp_lores.pdf
 
-$(stem)_tmp_hires.pdf: $(stem).pdf
+$(stem)_tmp_hires.pdf: $(stem).pdf $(stem)_Appendix_hires.pdf
 	rm -f $@
 	qpdf \
 		--empty --pages \
