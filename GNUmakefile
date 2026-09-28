@@ -24,7 +24,7 @@ $(target): SealSources.txt duplicates.tsv
 		> $@
 
 clean:
-	rm -f $(target)
+	rm -f $(target) *_tmp_*res.pdf *_tmp.pdf
 
 veryclean:
 	rm -f SealSources.txt $(target)

@@ -2,3 +2,8 @@
 __pycache__
 SealSources.txt
 kseal_dupsrc.txt
+~$*.doc*
+*_tmp_hires*.pdf
+*_tmp_lores*.pdf
+*_hires_tmp.pdf
+*_lores_tmp.pdf
